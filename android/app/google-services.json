@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "831249968087",
+    "project_id": "signin-mis",
+    "storage_bucket": "signin-mis.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:831249968087:android:fc3b98ac44bd9e56727992",
+        "android_client_info": {
+          "package_name": "com.example.lab_mis"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "831249968087-ksq41ecno5fhetakao86vn1vs07kl5ni.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRW3IKr6Lyz5c6-RumxyUZ0m0SqFsUlQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "831249968087-ksq41ecno5fhetakao86vn1vs07kl5ni.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
