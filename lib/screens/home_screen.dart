@@ -2,16 +2,15 @@ import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lab_mis/model/location.dart';
 import 'package:lab_mis/screens/calendar_screen.dart';
 import 'package:lab_mis/screens/signin_screen.dart';
 import 'package:lab_mis/screens/google_map_screen.dart';
 import 'package:lab_mis/services/notification_service.dart';
 
-import '../model/termin.dart';
+import '../model/exam.dart';
 import '../widgets/createNewElement.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 
 class HomeScreen extends StatefulWidget{
@@ -33,24 +32,24 @@ class _HomeScreenState extends State<HomeScreen>{
     super.initState();
   }
 
-  final List<Termin> _termini = [
-    Termin(
+  final List<Exam> _exams = [
+    Exam(
         id: "1",
         name: "MIS Mobile information systems",
-        date:  DateTime.parse("2022-12-29 15:00:00")),
-    Termin(
+        date:  DateTime.parse("2022-12-29 15:00:00"),
+        location: Location(latitude: 42.0043165, longitude: 21.4096452)),
+    Exam(
         id: "2",
-        name: "OOP Object oriented programming",
-        date: DateTime.parse("2022-12-13 15:00:00"),),
-    Termin(
-        id: "3",
         name: "HCI Design of human-computer interaction",
-        date: DateTime.parse("2023-03-20 15:00:00"),),
-    Termin(
+        date: DateTime.parse("2023-03-20 15:00:00"),
+        location: Location(latitude: 42.004400, longitude: 21.408918)),
+    Exam(
         id: "4",
         name: "DS Data Science",
-        date: DateTime.parse("2023-03-03 13:30:00"),)
+        date: DateTime.parse("2023-03-03 13:30:00"),
+        location: Location(latitude: 42.004906, longitude: 21.409890)),
   ];
+
 
   void _showModal(BuildContext ctx){
     showModalBottomSheet(
@@ -59,31 +58,40 @@ class _HomeScreenState extends State<HomeScreen>{
         return GestureDetector(
           onTap: () {},
           behavior: HitTestBehavior.opaque,
-          child: createNewElement(_addNewTermin),
+          child: createNewElement(_addNewExam),
         );
       }
     );
   }
 
-  void _addNewTermin(Termin termin){
+  void _addNewExam(Exam termin){
     setState(() {
-      _termini.add(termin);
+      _exams.add(termin);
     });
   }
 
   void _deleteTermin(String id){
     setState(() {
-      _termini.removeWhere((termin) => termin.id == id);
+      _exams.removeWhere((termin) => termin.id == id);
     });
   }
 
-  String _modifyDate(DateTime date){
+  String _modifySubtitle(DateTime date, Location location){
+    String subjectLocation = '';
+
+    if(location.latitude == 42.0043165 && location.longitude == 21.4096452){
+       subjectLocation = "FINKI";
+    }else if(location.latitude == 42.004400 && location.longitude == 21.408918){
+       subjectLocation = "FEIT";
+    }else {
+       subjectLocation = "TMF";
+    }
 
     String dateString = DateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     List<String> dateParts = dateString.split(" ");
     String modifiedTime = dateParts[1].substring(0,5);
 
-    return dateParts[0] + ' | ' + modifiedTime + 'h';
+    return dateParts[0] + ' | ' + modifiedTime + 'h | ' + subjectLocation;
   }
 
   Future _signOut() async{
@@ -120,12 +128,12 @@ class _HomeScreenState extends State<HomeScreen>{
         child: Column(
         children: <Widget>[
           Center(
-          child: _termini.isEmpty
+          child: _exams.isEmpty
               ? Text("No exams scheduled")
               : ListView.builder(
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
-                  itemCount: _termini.length,
+                  itemCount: _exams.length,
                   itemBuilder: (ctx, index) {
                     return Card(
                       elevation: 2,
@@ -133,37 +141,56 @@ class _HomeScreenState extends State<HomeScreen>{
                       child: ListTile(
                         tileColor: Colors.green[100],
                         title: Text(
-                          _termini[index].name,
+                          _exams[index].name,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          _modifyDate(_termini[index].date),
+                          _modifySubtitle(_exams[index].date, _exams[index].location),
                           style: TextStyle(color: Colors.grey),
                         ),
                         trailing: IconButton(
-                          onPressed: () => _deleteTermin(_termini[index].id),
+                          onPressed: () => _deleteTermin(_exams[index].id),
                           icon: Icon(Icons.delete_outline)),
                       ),
                     );
                   },
                 ),
               ),
-            ElevatedButton.icon(
-                icon: Icon(Icons.calendar_month_outlined, size: 30,),
-                label: Text("Calendar", style: TextStyle(fontSize: 20),),
-                onPressed: (){
-                  Navigator.push(context, 
-                  MaterialPageRoute(builder: (context) => CalendarScreen(_termini)));
-                },
+            Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    margin: EdgeInsets.all(5),
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.calendar_month_outlined, size: 30,),
+                      label: Text("Calendar", style: TextStyle(fontSize: 20),),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.all(10),
+                      ),
+                      onPressed: (){
+                        Navigator.push(context, 
+                        MaterialPageRoute(builder: (context) => CalendarScreen(_exams)));
+                      },
+                   ),
+                  ),
+                Container(
+                   margin: EdgeInsets.all(5),
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.map_outlined, size: 30,),
+                    label: Text("Show Map", style: TextStyle(fontSize: 20),),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.all(10),
+                    ),
+                    onPressed: (){
+                      Navigator.push(context, 
+                      MaterialPageRoute(builder: (context) => MapScreen(_exams)));
+                    },
+                  ),
+                )
+              ],
               ),
-              ElevatedButton.icon(
-                icon: Icon(Icons.map_outlined, size: 30,),
-                label: Text("Show Map", style: TextStyle(fontSize: 20),),
-                onPressed: (){
-                  Navigator.push(context, 
-                  MaterialPageRoute(builder: (context) => MapScreen()));
-                },
-              ),
+            ),
             ElevatedButton.icon(
                 icon: Icon(Icons.notifications, size: 30,),
                 label: Text("Show Local Notification", style: TextStyle(fontSize: 20),),

@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import '../model/termin.dart';
+import '../model/exam.dart';
 
 class CalendarScreen extends StatelessWidget{
   static const String idScreen = "calendarScreen";
-  final List<Termin> _termini;
+  final List<Exam> _termini;
 
   CalendarScreen(this._termini);
 
@@ -35,13 +35,13 @@ class CalendarScreen extends StatelessWidget{
   }
 }
 
-List<Termin> _getDataSource(List<Termin> _termini) {
-  final List<Termin> scheduledExams = _termini;
+List<Exam> _getDataSource(List<Exam> _termini) {
+  final List<Exam> scheduledExams = _termini;
   return scheduledExams;
 }
 
 class MeetingDataSource extends CalendarDataSource {
-  MeetingDataSource(List<Termin> source) {
+  MeetingDataSource(List<Exam> source) {
     appointments = source;
   }
 

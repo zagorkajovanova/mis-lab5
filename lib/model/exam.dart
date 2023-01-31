@@ -1,13 +1,15 @@
-class Termin {
+import 'location.dart';
+
+class Exam {
   final String id;
   final String name;
   final DateTime date;
-  // final String vreme;
+  final Location location;
 
-  Termin({
+  Exam({
     required this.id,
     required this.name,
     required this.date,
-    // required this.vreme
+    required this.location
   });
 }
