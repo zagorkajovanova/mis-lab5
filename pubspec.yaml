@@ -50,6 +50,7 @@ dependencies:
   # for getting user's current location
   geolocator: ^9.0.2
   geocoding: ^2.0.5
+  google_directions_api: ^0.9.1
 
 
 dev_dependencies:

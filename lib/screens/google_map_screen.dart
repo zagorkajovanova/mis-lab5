@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
 import 'package:lab_mis/services/notification_service.dart';
 import 'package:geocoding/geocoding.dart';
@@ -21,6 +22,7 @@ class MapScreen extends StatefulWidget{
 class _MapScreenState extends State<MapScreen>{
   final NotificationService service = NotificationService();
   final List<Marker> markers = <Marker>[];
+  Map<PolylineId, Polyline> polylines = {};
   List<Exam> _exams;
 
   _MapScreenState(this._exams);
@@ -32,12 +34,11 @@ class _MapScreenState extends State<MapScreen>{
   }
 
   Completer<GoogleMapController> _controller = Completer();
-  // set initial location
+  // set initial location 
   static const CameraPosition _kGoogle = CameraPosition(
-      target: LatLng(41.9981, 21.4254),
+      target: LatLng(42.00189631487379, 21.40748422242309),
     zoom: 14.4746,
   );
-
 
   // created method for getting user current location
   Future<Position> getUserCurrentLocation() async {
@@ -49,10 +50,47 @@ class _MapScreenState extends State<MapScreen>{
     return await Geolocator.getCurrentPosition();
   }
 
+  //finding and drawing shortest route to selected location
+  void _getShortestRoute(LatLng userLocationCoordinates, LatLng destinationLocationCoordinates) async{
+    print("Getting shortest route for selected destination");
+    PolylinePoints polylinePoints = PolylinePoints();
+    String googleAPI = 'AIzaSyBiZLHiNQAaMde8Eb2hWoHKA3hj_T6RBMY';
+
+    addPolyLine(List<LatLng> polylineCoordinates) {
+      PolylineId id = PolylineId("poly");
+      Polyline polyline = Polyline(
+        polylineId: id,
+        color: Colors.deepPurpleAccent,
+        points: polylineCoordinates,
+        width: 8,
+      );
+      polylines[id] = polyline;
+      setState(() {});
+    }
+
+    List<LatLng> polylineCoordinates = [];
+     
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleAPI,
+        PointLatLng(userLocationCoordinates.latitude, userLocationCoordinates.longitude),
+        PointLatLng(destinationLocationCoordinates.latitude, destinationLocationCoordinates.longitude),
+        travelMode: TravelMode.driving,
+    );
+
+    if (result.points.isNotEmpty) {
+          result.points.forEach((PointLatLng point) {
+              polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+          });
+    } else {
+        print(result.errorMessage);
+    }
+    addPolyLine(polylineCoordinates);
+  }
+
   //set markers for all exams
   void _setMarkers(exams) { 
+
     for(var i=0; i<exams.length; i++) {
-      print(exams[i].name);
       markers.add(Marker( 
       markerId: MarkerId(i.toString()),
       position: LatLng(exams[i].location.latitude, exams[i].location.longitude), //position of marker
@@ -61,11 +99,18 @@ class _MapScreenState extends State<MapScreen>{
         snippet: DateFormat("yyyy-MM-dd HH:mm:ss").format(exams[i].date),
       ),
       icon: BitmapDescriptor.defaultMarker, //Icon for Marker
+      onTap: (){
+        //on tap we get shortest route to the selected location
+        getUserCurrentLocation().then((userLocation) async {
+            LatLng destinationLocationCoordinates = LatLng(exams[i].location.latitude, exams[i].location.longitude);
+            LatLng userLocationCoordinates = LatLng(userLocation.latitude, userLocation.longitude);
+            _getShortestRoute(userLocationCoordinates, destinationLocationCoordinates);
+          });
+      }
     ));
     }
     print("Number of markers created: " + markers.length.toString());
   }
-
 
   // bool _checkIfUserEnteredZone(Position userPosition) {
   //   if(userPosition.latitude >= 42.000894 && userPosition.latitude <= 42.006855 && 
@@ -103,6 +148,7 @@ class _MapScreenState extends State<MapScreen>{
           child: GoogleMap(
           //adding marker for every exam location
           markers: Set<Marker>.of(markers),
+          polylines: Set<Polyline>.of(polylines.values),
           initialCameraPosition: _kGoogle,
           mapType: MapType.normal,
           myLocationEnabled: true,
