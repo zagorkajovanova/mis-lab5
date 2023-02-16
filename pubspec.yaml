@@ -42,16 +42,17 @@ dependencies:
   intl: ^0.18.0
   flutter_local_notifications: ^13.0.0
   timezone: ^0.9.0
-  rxdart: ^0.27.7
+  rxdart: ^0.26.0
   # for google maps
   dio: ^4.0.6
   google_maps_flutter: ^2.2.3
   flutter_polyline_points: ^1.0.0
   # for getting user's current location
-  geolocator: ^9.0.2
   geocoding: ^2.0.5
   google_directions_api: ^0.9.1
-
+  # for local notifications based on location
+  geolocator: ^9.0.2
+  
 
 dev_dependencies:
   flutter_test:

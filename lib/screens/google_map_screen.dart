@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
 import 'package:lab_mis/services/notification_service.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -21,9 +20,11 @@ class MapScreen extends StatefulWidget{
 
 class _MapScreenState extends State<MapScreen>{
   final NotificationService service = NotificationService();
+  Completer<GoogleMapController> _controller = Completer();
   final List<Marker> markers = <Marker>[];
   Map<PolylineId, Polyline> polylines = {};
   List<Exam> _exams;
+  String googleAPI = 'AIzaSyBiZLHiNQAaMde8Eb2hWoHKA3hj_T6RBMY';
 
   _MapScreenState(this._exams);
   
@@ -31,16 +32,56 @@ class _MapScreenState extends State<MapScreen>{
   void initState() {
     super.initState();
     _setMarkers(_exams);
+    _setGeofence();
   }
 
-  Completer<GoogleMapController> _controller = Completer();
+  void _notification() async {
+    await service.showNotification(
+      id: 0, 
+      title: 'You have scheduled exams in this location!', 
+      body: 'Check your calendar'
+    );
+  }
+
+  //setting a geofence to enable location-based notifications
+  void _setGeofence() {
+    print("Setting geofence");
+    final double fenceLat = 42.0043165;
+    final double fenceLong = 21.4096452;
+    final double fenceRadius = 300.0; // meters
+
+    final LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 100,
+    );
+
+    //start listening to location updates
+    StreamSubscription<Position> positionStream = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen((Position position) {
+      //check if the device is witin the geofence
+      double distance = Geolocator.distanceBetween(
+        position.latitude, 
+        position.longitude, 
+        fenceLat, 
+        fenceLong
+        );
+      if(distance <= fenceRadius) {
+        //trigger a notification
+        print("Entered geofence");
+        _notification();
+      } 
+    });
+    // positionStream.cancel();
+  }
+
   // set initial location 
   static const CameraPosition _kGoogle = CameraPosition(
       target: LatLng(42.00189631487379, 21.40748422242309),
     zoom: 14.4746,
   );
 
-  // created method for getting user current location
+  // method for getting user current location
   Future<Position> getUserCurrentLocation() async {
     await Geolocator.requestPermission().then((value){
     }).onError((error, stackTrace) async {
@@ -54,13 +95,12 @@ class _MapScreenState extends State<MapScreen>{
   void _getShortestRoute(LatLng userLocationCoordinates, LatLng destinationLocationCoordinates) async{
     print("Getting shortest route for selected destination");
     PolylinePoints polylinePoints = PolylinePoints();
-    String googleAPI = 'AIzaSyBiZLHiNQAaMde8Eb2hWoHKA3hj_T6RBMY';
 
     addPolyLine(List<LatLng> polylineCoordinates) {
       PolylineId id = PolylineId("poly");
       Polyline polyline = Polyline(
         polylineId: id,
-        color: Colors.deepPurpleAccent,
+        color: Colors.red,
         points: polylineCoordinates,
         width: 8,
       );
@@ -112,39 +152,14 @@ class _MapScreenState extends State<MapScreen>{
     print("Number of markers created: " + markers.length.toString());
   }
 
-  // bool _checkIfUserEnteredZone(Position userPosition) {
-  //   if(userPosition.latitude >= 42.000894 && userPosition.latitude <= 42.006855 && 
-  //      userPosition.longitude >= 21.406468 && userPosition.longitude <= 21.413285) {
-  //       return true;
-  //   }
-  //   print("not in zone");
-  //   print(userPosition.latitude);
-  //   print(userPosition.longitude);
-  //   return false;
-  // }
-
   @override
   Widget build(BuildContext context) {
-    // const oneSec = const Duration(seconds: 10);
-    // Timer.periodic(oneSec, (Timer timer) {
-    //   print("execute timer task");
-    //   getUserCurrentLocation().then((userPosition) {
-    //     print("success getting user location");
-    //     if(_checkIfUserEnteredZone(userPosition)) {
-    //         print("Repeat task every one second");  // This statement will be printed after every one second
-    //         service.showNotification(id: 0, title: 'You have upcoming exams', body: 'Check your calendar');
-    //     }
-    //   });   
-    // }); 
-
     return Scaffold(
       appBar: AppBar(
-        // on below line we have given title of app
         title: Text("Google Maps"),
       ),
        body: Container(
         child: SafeArea(
-          // on below line creating google maps
           child: GoogleMap(
           //adding marker for every exam location
           markers: Set<Marker>.of(markers),
@@ -165,7 +180,6 @@ class _MapScreenState extends State<MapScreen>{
         onPressed: () async{
           getUserCurrentLocation().then((value) async {
             print(value.latitude.toString() +" "+value.longitude.toString());
-
             // specified current users location
             CameraPosition cameraPosition = CameraPosition(
               target: LatLng(value.latitude, value.longitude),
@@ -180,6 +194,7 @@ class _MapScreenState extends State<MapScreen>{
         },
         child: Icon(Icons.center_focus_strong_rounded, color: Colors.black,),
       ),
+      
     );
   }
 
